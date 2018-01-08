@@ -223,8 +223,10 @@ if __name__ == '__main__':
     n_iters = args['n_iters']
 
     cs = create_config_space()
-    rf = pickle.load(open("./rf_surrogate_paramnet_mnist.pkl", "rb"))
-    cost_rf = pickle.load(open("./rf_cost_surrogate_paramnet_mnist.pkl", "rb"))
+    rf = pickle.load(open("./data/rf_surrogate_paramnet_mnist.pkl", "rb"))
+    cost_rf = pickle.load(open("./data/rf_cost_surrogate_paramnet_mnist.pkl", "rb"))
+    initMax = 0
+    initMin = 1
 
     if args["run_smac"]:
         scenario = Scenario({"run_obj": "quality",
@@ -261,12 +263,36 @@ if __name__ == '__main__':
             incumbent_performance.append(inc_value)
 
         # TODO: save and plot the wall clock time and the validation of the incumbent after each iteration here
+        figSmacVal = plt.figure()
+        axSmacVal = figSmacVal.add_subplot(211)
+        axSmacVal.set_xlabel('wall clock time [s]')
+        axSmacVal.set_ylabel('incumbent validation error')
+        axSmacVal2 = figSmacVal.add_subplot(212)
+        axSmacVal2.set_xlabel('wall clock time [s]')
+        axSmacVal2.set_ylabel('incumbent validation error')
+
+        axSmacVal.plot(wall_clock_time, incumbent_performance, label='SMAC')
+        axSmacVal2.plot(wall_clock_time, incumbent_performance, label='SMAC')
+
+        axSmacVal.set_ylim([0, 0.2])
+        axSmacVal.legend(borderaxespad=0.)
+        axSmacVal2.set_ylim([0.01, 0.04])
+        axSmacVal2.legend(borderaxespad=0.)
+        figSmacVal.savefig('smacClockVal.png', dpi=400)
 
         lc_smac = []
         for d in rh.data:
             lc_smac.append(rh.data[d].additional_info["learning_curve"])
 
         # TODO: save and plot all learning curves here
+        figSmacLc = plt.figure()
+        axSmacLc = figSmacLc.add_subplot(111)
+        axSmacLc.set_xlabel('epoch')
+        axSmacLc.set_ylabel('validation error')
+
+        axSmacLc.plot(np.transpose(lc_smac))
+
+        figSmacLc.savefig('smacLc.png', dpi=400)
 
     if args["run_hyperband"]:
         nameserver, ns_port = hpbandster.distributed.utils.start_local_nameserver()
@@ -311,4 +337,28 @@ if __name__ == '__main__':
         incumbent_performance = traj["losses"]
 
         # TODO: save and plot the wall clock time and the validation of the incumbent after each iteration here
+
+        figHypVal = plt.figure()
+        axHypVal = figHypVal.add_subplot(211)
+        axHypVal2 = figHypVal.add_subplot(212)
+        axHypVal.set_xlabel('wall clock time [s]')
+        axHypVal.set_ylabel('incumbent validation error')
+        axHypVal2.set_xlabel('wall clock time [s]')
+        axHypVal2.set_ylabel('incumbent validation error')
+        axHypVal.plot(wall_clock_time, incumbent_performance, label='Hyperband')
+        axHypVal2.plot(wall_clock_time, incumbent_performance, label='Hyperband')
+
+        axHypVal.legend(borderaxespad=0.)
+        axHypVal2.legend(borderaxespad=0.)
+        axHypVal.set_ylim([0, 0.2])
+        axHypVal2.set_ylim([0.01, 0.04])
+        figHypVal.savefig('hyperClockVal.png', dpi=400)
+
+        figHypLc = plt.figure()
+        axHypLc = figHypLc.add_subplot(111)
+        axHypLc.set_xlabel('epoch')
+        axHypLc.set_ylabel('validation error')
+        for lc in lc_hyperband:
+            axHypLc.plot(lc)
+        figHypLc.savefig('hyperLc.png', dpi=400)
 
